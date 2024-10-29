@@ -1,7 +1,5 @@
 
 
-
-
 #                       SynaNN: A Synaptic Neural Network 
 
 
@@ -46,7 +44,11 @@ Assume that the total number of input of the synapse graph equals the total numb
 <img src="https://latex.codecogs.com/svg.latex?y_{i}(\textbf{x};%20\pmb\beta_i)%20=%20\alpha_i%20x_{i}{\prod_{j=1}^{n}(1-\beta_{ij}x_{j})},\%20for\%20all\%20i%20\in%20[1,n]"/>
 </p>
 
-where <img src="https://latex.codecogs.com/svg.latex?\textbf{x}=(x_1,\cdots,x_n),x_i\in(0,1),\textbf{y}=(y_1,\cdots,y_n),y_i\in(0,1),\beta_{ij}\in(0,1))"/>. 
+where 
+
+<p align='center'>
+<img src="https://latex.codecogs.com/svg.latex?\textbf{x}=(x_1,\cdots,x_n),\textbf{y}=(y_1,\cdots,y_n),x_i,y_i\in(0,1),\alpha_i \geq 1,\beta_{ij}\in(0,1))"/>
+</p>
 
 Transformed to tensor/matrix representation, we have the synapse log formula, 
 
@@ -54,7 +56,7 @@ Transformed to tensor/matrix representation, we have the synapse log formula,
 <img src="https://latex.codecogs.com/svg.latex?log(\textbf{y})=log(\textbf{x})+{\textbf{1}_{|x|}}*log(\textbf{1}_{|\beta|}-diag(\textbf{x})*\pmb{\beta}^T)"/>
 </p>
 
-We are going to implement this formula for fully-connected synapse network with PyTorch in the example.
+We are going to implement this formula for fully-connected synapse network with Tensorflow and PyTorch in the examples.
 
 Moreover, we can design synapse graph like circuit below for some special applications. 
 
@@ -65,14 +67,340 @@ Moreover, we can design synapse graph like circuit below for some special applic
 ## 2. SynaNN Key Features
 
 * Synapses are joint points of neurons with electronic and chemical functions, location of learning and memory
+
 * A synapse function is nonlinear, log concavity, infinite derivative in surprisal space (negative log space)
+
 * Surprisal synapse is Bose-Einstein distribution with coefficient as negative chemical potential
+
 * SynaNN graph & tensor, surprisal space, commutative diagram, topological conjugacy, backpropagation algorithm
+
 * SynaNN for MLP, CNN, RNN are models for various neural network architecture
+
 * Synapse block can be embedded into other neural network models
+
 * Swap equation links between swap and odds ratio for healthcare, fin-tech, and insurance applications
 
-## 3. A PyTorch Implementation of A SynaNN for MNIST
+  
+
+## 3. A SynaNN for MNIST by Tensoflow 2.x
+
+Tensorflow 2 is an open source machine learning framework with Keras included. TPU is the tensor processor unit that can accelerate the computing of neural networks with multiple cores and clusters.
+
+MNIST is a data sets for hand-written digit recognition in machine learning. It is split into three parts: 60,000 data points of training data (mnist.train), 10,000 points of test data (mnist.test), and 5,000 points of validation data (mnist.validation).
+
+By using Synapse layer and simple multiple layers of CNN (Conv2D), MaxPooling, Layer, Activation, Droupout, and Adam for optimization, we achieved very good **99.59%** accuracy . 
+
+
+
+### 3.1 Import Tensorflow and Keras
+
+```python
+# foundation import
+import os, datetime
+import numpy as np
+
+# tensorflow import
+import tensorflow as tf
+import tensorflow_datasets as tfds
+
+# keras import
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation, Dropout
+from tensorflow.keras.layers import Flatten, Conv2D, GlobalMaxPooling2D
+from tensorflow.keras.layers import Input, Layer, BatchNormalization
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras import regularizers
+
+# keras accessory
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import LearningRateScheduler, ModelCheckpoint, ReduceLROnPlateau
+
+# ploting
+import matplotlib.pyplot as plt
+```
+
+These are imports for later use. We are going to apply tensorflow, keras, numpy, and matplotlib.
+
+ 
+
+### 3.2 Initialize TPU
+
+```python
+# use TPU
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
+tf.config.experimental_connect_to_cluster(resolver)
+
+# This is the TPU initialization code that has to be at the beginning.
+tf.tpu.experimental.initialize_tpu_system(resolver)
+strategy = tf.distribute.experimental.TPUStrategy(resolver)
+```
+
+This code clip is for TPU using in colab environment.  Below is the output of TPU initialization.
+
+```
+INFO:tensorflow:Initializing the TPU system: grpc://10.116.65.130:8470
+INFO:tensorflow:Initializing the TPU system: grpc://10.116.65.130:8470
+INFO:tensorflow:Clearing out eager caches
+INFO:tensorflow:Clearing out eager caches
+INFO:tensorflow:Finished initializing TPU system.
+INFO:tensorflow:Finished initializing TPU system.
+WARNING:absl:`tf.distribute.experimental.TPUStrategy` is deprecated, please use  the non experimental symbol `tf.distribute.TPUStrategy` instead.
+INFO:tensorflow:Found TPU system:
+INFO:tensorflow:Found TPU system:
+INFO:tensorflow:*** Num TPU Cores: 8
+INFO:tensorflow:*** Num TPU Cores: 8
+INFO:tensorflow:*** Num TPU Workers: 1
+INFO:tensorflow:*** Num TPU Workers: 1
+INFO:tensorflow:*** Num TPU Cores Per Worker: 8
+INFO:tensorflow:*** Num TPU Cores Per Worker: 8
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:localhost/replica:0/task:0/device:CPU:0, CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:localhost/replica:0/task:0/device:CPU:0, CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:localhost/replica:0/task:0/device:XLA_CPU:0, XLA_CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:localhost/replica:0/task:0/device:XLA_CPU:0, XLA_CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:CPU:0, CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:CPU:0, CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:0, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:0, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: 
+......
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:6, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:6, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:7, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU:7, TPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU_SYSTEM:0, TPU_SYSTEM, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:TPU_SYSTEM:0, TPU_SYSTEM, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:XLA_CPU:0, XLA_CPU, 0, 0)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:worker/replica:0/task:0/device:XLA_CPU:0, XLA_CPU, 0, 0)
+```
+
+
+
+### 3.3 Define Plotting Program
+
+```python
+# plot accuracy graph
+def plotAccuracy20(history):
+  plt.plot(history.history['accuracy'])
+  plt.plot(history.history['val_accuracy'])
+  plt.title('model accuracy')
+  plt.ylabel('accuracy')
+  plt.xlabel('epoch')
+  plt.legend(['train', 'validation'], loc='upper left')
+  plt.show()
+  plt.tight_layout()
+```
+
+This is the procedure to draw the accuracy graph.
+
+
+
+### 3.4 Define Global Parameters
+
+```python
+# global training data
+batch_size = 128*4
+num_classes = 10
+epochs = 35
+hidden_size = 196*4 
+```
+
+Define batch size, epochs, and hidden_size.
+
+
+
+### 3.5 Define Synapse Class as a Layer
+
+```python
+ class Synapse(Layer):
+  # output_dim is the number of output of Synapse
+  def __init__(self, output_dim, name=None, **kwargs):
+    super(Synapse, self).__init__(name=name)
+    self.output_dim = output_dim
+    super(Synapse, self).__init__(**kwargs)
+
+  def build(self, input_shape):
+    # Create a trainable weight variable for this layer.
+    initializer = tf.keras.initializers.RandomUniform(minval=-0.00, maxval=0.01, seed=3)
+    config = initializer.get_config()
+    initializer = initializer.from_config(config)
+    
+    # Define kernel
+    self.kernel = self.add_weight(name='kernel', 
+                                  shape=(input_shape[1], self.output_dim), 
+                                  trainable=True)
+	# Build Synapse
+    super(Synapse, self).build(input_shape)
+
+  # synapse kernel implementation. read the reference paper for explaination.
+  def syna_block(self, xx):
+    ww2 = self.kernel
+    shapex = tf.reshape(tf.linalg.diag(xx), [-1, self.output_dim])
+    betax = tf.math.log1p(-tf.matmul(shapex, ww2))
+    row = tf.shape(betax)[0]
+    allone = tf.ones([row//(self.output_dim), row], tf.float32)
+    return xx*tf.exp(tf.tensordot(allone, betax, 1)) #*self.bias
+
+  # call
+  def call(self, x):
+    return self.syna_block(x)
+
+  # get output shape
+  def compute_output_shape(self, input_shape):
+    return (input_shape[0], self.output_dim)
+  
+  # get config
+  def get_config(self):
+    config = super(Synapse, self).get_config()
+    config.update({'output_dim': self.output_dim})
+    return config
+
+```
+
+This is the implementation of Syanapse in Tensorflow. It is a layer to replace Dense in the Keras.
+
+
+
+### 3.6 Specify Model
+
+```python
+# model
+def create_model():
+  return Sequential([
+       Conv2D(28,  (3, 3), activation='relu', input_shape= (28, 28, 1), trainable=True),
+       Conv2D(56,  (3, 3), activation='relu', trainable=True), 
+       Conv2D(112, (5, 5), activation='relu', trainable=True),
+       Conv2D(hidden_size, (7, 7), activation='relu', trainable=True),
+       GlobalMaxPooling2D(),
+       Dropout(0.25),
+       Flatten(),
+       Synapse(hidden_size),
+       Dropout(0.25),
+       Dense(num_classes)])
+```
+
+We created 4 Conv2D as feature extraction along with relu activation. GlobalMaxPooling2D is applied to simplify the Convolution layers. The Synapse layer that implemented SynaNN model is used for fully connected layer. That is the key to classify the images from features. 
+
+ 
+
+### 3.7 Define Pre-Processing Dataset
+
+```python
+# data pre-processing
+def get_dataset(batch_size=64):
+  datasets, info = tfds.load(name='mnist', 
+                             with_info=True, as_supervised=True, try_gcs=True)
+  mnist_train, mnist_test = datasets['train'], datasets['test']
+  
+  # scale image
+  def scale(image, label):
+    image = tf.cast(image, tf.float32)
+    image /= 255.0
+    return image, label
+
+  # get train and test dataset
+  train_dataset = mnist_train.map(scale).shuffle(10000).batch(batch_size)
+  test_dataset = mnist_test.map(scale).batch(batch_size)
+  return train_dataset, test_dataset
+```
+
+This is the pre-processing procedure for machine learning.
+
+
+
+### 3.7 Start Training
+
+```python
+# get dataset
+train_dataset, test_dataset = get_dataset()
+
+# create model and compile
+with strategy.scope():
+  model = create_model()
+  model.compile(optimizer=Adam(lr=0.01),
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                metrics=['accuracy'])
+# show model information
+model.summary()
+
+# checkpoint setting
+checkpoint_path = 'synann_mnist_tpu_model.h5'
+checkpoint_dir = os.path.dirname(checkpoint_path)
+checkpoint = ModelCheckpoint(filepath=checkpoint_path, monitor='val_accuracy', verbose=1, save_weights_only=False, save_best_only=True)
+def lr_sch(epoch):
+    if epoch < 12:
+        return 1e-3
+    if epoch < 30:
+        return 1e-4
+    if epoch < 65:
+        return 1e-5
+    if epoch < 90:
+        return 1e-6
+    return 1e-6
+      
+# scheduler and reducer setting
+lr_scheduler = LearningRateScheduler(lr_sch)
+lr_reducer = ReduceLROnPlateau(monitor='accuracy',factor=0.2,patience=5, mode='max',min_lr=1e-5)
+callbacks = [checkpoint, lr_scheduler, lr_reducer]
+
+# training start
+history = model.fit(train_dataset, epochs=epochs, validation_data=test_dataset,verbose=1, callbacks=callbacks)
+
+# plot accuracy graph
+plotAccuracy20(history)
+```
+
+Create model, compile, set checking point, sec scheduler and reducer, start training and plot accuracy graph. The output result with the best accuracy **99.59%** is showed below. The number of iteration is only 31. Excellent!
+
+```text
+Epoch 00028: val_accuracy did not improve from 0.99590
+938/938 [==============================] - 30s 32ms/step - loss: 0.0035 - accuracy: 0.9990 - val_loss: 0.0225 - val_accuracy: 0.9959
+Epoch 29/31
+936/938 [============================>.] - ETA: 0s - loss: 0.0027 - accuracy: 0.9992
+Epoch 00029: val_accuracy did not improve from 0.99590
+938/938 [==============================] - 30s 32ms/step - loss: 0.0027 - accuracy: 0.9992 - val_loss: 0.0258 - val_accuracy: 0.9956
+Epoch 30/31
+937/938 [============================>.] - ETA: 0s - loss: 0.0026 - accuracy: 0.9992se
+Epoch 00030: val_accuracy did not improve from 0.99590
+938/938 [==============================] - 29s 31ms/step - loss: 0.0026 - accuracy: 0.9992 - val_loss: 0.0284 - val_accuracy: 0.9954
+Epoch 31/31
+937/938 [============================>.] - ETA: 0s - loss: 0.0029 - accuracy: 0.9992
+Epoch 00031: val_accuracy did not improve from 0.99590
+938/938 [==============================] - 29s 31ms/step - loss: 0.0029 - accuracy: 0.9992 - val_loss: 0.0265 - val_accuracy: 0.9956
+
+```
+
+<p align='center'>
+<img src="./picture/mnist-accuracy.png" alt="synapse-flip" width="50%" />
+</p>
+
+### 3.8 Evaluation and Predication
+
+```python
+# load model
+with strategy.scope():
+  new_model=tf.keras.models.load_model(checkpoint_path, custom_objects={'Synapse': Synapse})
+  new_model.compile(optimizer=Adam(lr=0.01),
+                loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                metrics=['accuracy'])
+new_model.summary()
+
+# evaluate
+loss,acc = new_model.evaluate(test_dataset, verbose=2)
+print("Restored model: accuracy = {:5.2f}%".format(100*acc))
+
+# predict
+probs = new_model.predict(test_dataset)
+print(probs.argmax(axis=1), len(probs))
+```
+
+Evaluation and predication.
+
+
+
+
+
+## 4. A SynaNN for MNIST by PyTorch
 
 PyTroch is an open source machine learning framework that accelerates the path from research prototyping to production deployment.
 
@@ -82,7 +410,7 @@ A hard task to implement SynaNN by PyTorch to solve MNIST problem  is to  define
 
 The architecture of the codes are divided into header, main, train, test, net, and synapse. 
 
-### 3.1 Header
+### 4.1 Header
 
 The header section imports the using libraries. torch, torchvision, and matplotlib are large libraries.
 
@@ -113,7 +441,7 @@ import matplotlib.pyplot as plt
 train_losses = train_counter = test_counter = test_losses = []
 ```
 
-### 3.2 Synapse Class
+### 4.2 Synapse Class
 
 Here is the default API specification of a class in the neural network module of PyTorch. 
 
@@ -200,7 +528,7 @@ One challenge was to represent the links of synapses as tensors so we can apply 
         )
 ```
 
-### 3.3 Net Class
+### 4.3 Net Class
 
 
 
@@ -242,7 +570,7 @@ Synapse pluses Batch Normalization can greatly speed up the processing to achiev
 
 ```
 
-### 3.4 Train
+### 4.4 Train
 
 ```python
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -265,7 +593,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
 
 ```
 
-### 3.5 Test
+### 4.5 Test
 
 ```python
 def test(args, model, device, test_loader):
@@ -288,7 +616,7 @@ def test(args, model, device, test_loader):
   
 ```
 
-### 3.6 Main
+### 4.6 Main
 
 ```python
 def main():
@@ -365,13 +693,13 @@ if __name__ == '__main__':
   main()
 ```
 
-## 4. Results
+## 5. Results
 
 <p align='center'>
 <img src="./picture/synapse-pytorch-99p.jpg" alt="synapse-pytorch-99p" style="width: 80%;" />
 </p>
 
-## 5. References
+## 6. References
 
 1. ##### SynaNN: A Synaptic Neural Network and Synapse Learning
 
