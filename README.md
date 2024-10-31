@@ -43,12 +43,13 @@ Assume that the total number of input of the synapse graph equals the total numb
 <p align='center'>
 <img src="https://latex.codecogs.com/svg.latex?y_{i}(\textbf{x};%20\pmb\beta_i)%20=%20\alpha_i%20x_{i}{\prod_{j=1}^{n}(1-\beta_{ij}x_{j})},\%20for\%20all\%20i%20\in%20[1,n]"/>
 </p>
-
+<!--
 where 
 
 <p align='center'>
-<img src="https://latex.codecogs.com/svg.latex?\textbf{x}=(x_1,\cdots,x_n),\textbf{y}=(y_1,\cdots,y_n),x_i,y_i\in(0,1),\alpha_i \geq 1,\beta_{ij}\in(0,1))"/>
+<img src="https://latex.codecogs.com/svg.latex?(\textbf{x}=(x_1,\cdots,x_n),\textbf{y}=(y_1,\cdots,y_n),%20x_i, y_i%20\in(0,1),%20\alpha_i%20\geq 1,%20\beta_{ij}\in(0,1))"/>
 </p>
+-->
 
 Transformed to tensor/matrix representation, we have the synapse log formula, 
 
@@ -88,7 +89,7 @@ Tensorflow 2 is an open source machine learning framework with Keras included. T
 
 MNIST is a data sets for hand-written digit recognition in machine learning. It is split into three parts: 60,000 data points of training data (mnist.train), 10,000 points of test data (mnist.test), and 5,000 points of validation data (mnist.validation).
 
-By using Synapse layer and simple multiple layers of CNN (Conv2D), MaxPooling, Layer, Activation, Droupout, and Adam for optimization, we achieved very good **99.59%** accuracy . 
+We achieved very good accuracy by using the Synapse layer and simple multiple layers of CNN (Conv2D), MaxPooling, Layer, Activation, Dropout, and Adam for optimization. 
 
 
 
