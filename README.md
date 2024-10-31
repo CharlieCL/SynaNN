@@ -702,15 +702,9 @@ if __name__ == '__main__':
 
 ## 6. References
 
-1. ##### SynaNN: A Synaptic Neural Network and Synapse Learning
+1. <a href=https://www.researchgate.net/publication/327433405_SynaNN_A_Synaptic_Neural_Network_and_Synapse_Learning>**SynaNN: A Synaptic Neural Network and Synapse Learning**</a>
 
-   https://www.researchgate.net/publication/327433405_SynaNN_A_Synaptic_Neural_Network_and_Synapse_Learning
+2. <a href=https://www.researchgate.net/publication/320557823_A_Non-linear_Synaptic_Neural_Network_Based_on_Excitation_and_Inhibition>**A Non-linear Synaptic Neural Network Based on Excitation and Inhibition**</a>
 
-2. **A Non-linear Synaptic Neural Network Based on Excitation and Inhibition**
-
-   https://www.researchgate.net/publication/320557823_A_Non-linear_Synaptic_Neural_Network_Based_on_Excitation_and_Inhibition
-
-3. **SynaNN: Sin Function Regression By JAX**
-   
-   https://github.com/CharlieCL/SynaNN/blob/master/SynaNNRegressionByJAX.ipynb
+3. <a href=https://github.com/CharlieCL/SynaNN/blob/master/SynaNNRegressionByJAX.ipynb>**SynaNN: Sin Function Regression By JAX**</a>
    
