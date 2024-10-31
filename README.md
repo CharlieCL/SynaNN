@@ -709,4 +709,7 @@ if __name__ == '__main__':
 
    https://www.researchgate.net/publication/320557823_A_Non-linear_Synaptic_Neural_Network_Based_on_Excitation_and_Inhibition
 
-3. 
+3. **SynaNN: Sin Function Regression By JAX**
+   
+   https://github.com/CharlieCL/SynaNN/blob/master/SynaNNRegressionByJAX.ipynb
+   
